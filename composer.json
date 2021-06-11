@@ -1,0 +1,22 @@
+{
+    "name": "mathilde-grise/refactoring-kata",
+    "description": "Refactoring kata for hiring process",
+    "type": "project",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "MathildeGrise\\Recrutement\\KataRefacto\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MathildeGrise\\Recrutement\\KataRefacto\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+      "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    }
+}
