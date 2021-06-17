@@ -35,7 +35,7 @@ class CreateReservation
     /**
      * @var Product
      */
-    protected $product;
+    protected $oProd;
 
     /**
      * @var Store
@@ -45,7 +45,7 @@ class CreateReservation
     /**
      * @var Customer
      */
-    protected $customer;
+    protected $user;
 
     /**
      * @var EReservation
@@ -74,17 +74,17 @@ class CreateReservation
         }
         $this->store = ApplicationContext::getInstance()->getCurrentStore();
         // set product from SKU
-        $this->product = Application_ServiceLocator::get('product.repository')->getProductFromSkuByStore($data[self::PRODUCT_SKU_PARAM], $this->store->getId());
-        // set costumer from costumer id
-        $this->customer = Application_ServiceLocator::get('customer.repository')->getById($data[self::CUSTOMER_ID_PARAM]);
+        $this->oProd = Application_ServiceLocator::get('product.repository')->getProductFromSkuByStore($data[self::PRODUCT_SKU_PARAM], $this->store->getId());
+        // set user from costumer id
+        $this->user = Application_ServiceLocator::get('customer.repository')->getById($data[self::CUSTOMER_ID_PARAM]);
 
         /* create e-reservation */
 
         /* check there is stock for the product */
         Application_ServiceLocator::get('logger')->log('Determine if there is stock for the product on the store', self::INFO_LOG_LEVEL);
-        $stockService = Application_ServiceLocator::get('stock.product_availability');
+        $stock = Application_ServiceLocator::get('stock.product_availability');
         try {
-            $stock = $stockService->getStockLevelByStore($this->store->getId(), $this->product);
+            $stock = $stock->getStockLevelByStore($this->store->getId(), $this->oProd);
         } catch (Exception $e) {
             // log the error status
             Application_ServiceLocator::get('logger')->log("Error StockByStore - " . $e->getMessage(), self::INFO_LOG_LEVEL);
@@ -98,9 +98,9 @@ class CreateReservation
         // Persist new e-reservation in DB
         Application_ServiceLocator::get('logger')->log('Create new E-reservation', self::INFO_LOG_LEVEL);
         $ereservationRepository = Application_ServiceLocator::get('ereservation.repository');
-        $price = $this->product->getPrice();
+        $price = $this->oProd->getPrice();
         if ($price > 100000) {
-            if (preg_match('/^WAT/', $this->product->getSku())) { // A watch
+            if (preg_match('/^WAT/', $this->oProd->getSku())) { // A watch
                 $price = $price * (1 + 0.15);
             } else {
                 $price = $price * (1 + 0.10);
@@ -111,9 +111,9 @@ class CreateReservation
         $this->eReservation = new EReservation(
             $id,
             $this->store->getId(),
-            $this->product->getSKU(),
+            $this->oProd->getSKU(),
             $price,
-            $this->customer->getId()
+            $this->user->getId()
         );
         $ereservationRepository->save($this->eReservation);
 
