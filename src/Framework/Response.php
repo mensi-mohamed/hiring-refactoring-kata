@@ -38,6 +38,8 @@ class Response
     public function setData(array $data)
     {
         $this->data = $data;
+
+        return $this;
     }
 
     /**

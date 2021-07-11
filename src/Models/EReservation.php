@@ -70,4 +70,74 @@ class EReservation
     {
         return $this->customerId;
     }
+
+    /**
+     * @param int $id
+     *
+     * @return EReservation
+     */
+    public function setId(int $id): EReservation
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return EReservation
+     */
+    public function setStoreId(int $storeId): EReservation
+    {
+        $this->storeId = $storeId;
+
+        return $this;
+    }
+
+    /**
+     * @param string $productSku
+     *
+     * @return EReservation
+     */
+    public function setProductSku(string $productSku): EReservation
+    {
+        $this->productSku = $productSku;
+
+        return $this;
+    }
+
+    /**
+     * @param int $price
+     *
+     * @return EReservation
+     */
+    public function setPrice(int $price): EReservation
+    {
+        $this->price = $price;
+
+        return $this;
+    }
+
+    /**
+     * @param int $customerId
+     *
+     * @return EReservation
+     */
+    public function setCustomerId(int $customerId): EReservation
+    {
+        $this->customerId = $customerId;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPrice(): int
+    {
+        return $this->price;
+    }
+
+
 }

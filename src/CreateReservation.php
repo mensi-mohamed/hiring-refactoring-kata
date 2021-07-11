@@ -91,7 +91,7 @@ class CreateReservation
             return $response->setCode(500);
         }
         // Check availability
-        if (!$stock['Available']) {
+        if (!$stock->getData()['Available']) {
             return $response->setCode(500);
         }
 
