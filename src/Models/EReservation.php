@@ -25,23 +25,6 @@ class EReservation
      */
     private $customerId;
 
-    /**
-     * EReservation constructor.
-     * @param int $id
-     * @param int $storeId
-     * @param string $productSku
-     * @param int $price
-     * @param int $customerId
-     */
-    public function __construct($id, $storeId, $productSku, $price, $customerId)
-    {
-        $this->id = $id;
-        $this->storeId = $storeId;
-        $this->productSku = $productSku;
-        $this->price = $price;
-        $this->customerId = $customerId;
-    }
-
     public function getId()
     {
         return $this->id;
@@ -139,5 +122,20 @@ class EReservation
         return $this->price;
     }
 
-
+    public static function create(
+        int $id,
+        int $storeId,
+        int|string $productId,
+        int $price,
+        int $customerId
+    ): self
+    {
+        return (new self())
+            ->setId($id)
+            ->setStoreId($storeId)
+            ->setProductSku($productId)
+            ->setPrice($price)
+            ->setCustomerId($customerId)
+;
+    }
 }

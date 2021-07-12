@@ -27,7 +27,7 @@ class CreateReservationTest extends TestCase
     const SAlES_TEAM_MAIL = 'sales@mathilde-grise.com';
 
     /** @var CreateReservation */
-    private $SUT;
+    private $service;
 
     /** @var EReservationRepository  */
     private $EReservationRepository;
@@ -41,42 +41,37 @@ class CreateReservationTest extends TestCase
     /** @var Product  */
     private $product;
 
+    /** @var ProductRepository  */
+    private $productRepository;
+
+    /** @var CustomerRepository  */
+    private $customerRepository;
+
     /** @var httpMailer */
     private $mailer;
+
+    private $logger;
 
     public function __construct()
     {
         parent::__construct();
-        $this->SUT = new CreateReservation();
+        $this->service = new CreateReservation();
         $storeId = 17;
         ApplicationContext::$currentStore = $this->store = new Store($storeId);
         ApplicationContext::$config = ['sales_team_email' => self::SAlES_TEAM_MAIL];
-        $sku = 'test';
-        $price = 200000;
-        $this->product = new Product($sku, $price);
-        $customer = new Customer(1);
         $this->stock = $this->prophesize(HttpStockService::class);
         $this->mailer = $this->prophesize(HttpMailer::class);
+        $this->logger = $this->prophesize(Logger::class);
+        $this->customerRepository = $this->prophesize(CustomerRepository::class);
+        $this->productRepository = $this->prophesize(ProductRepository::class);
         $this->EReservationRepository = $this->prophesize(EReservationRepository::class);
-        Application_ServiceLocator::$services = [
-            'logger' => new Logger(),
-            'customer.repository' => new CustomerRepository([$customer->getId() => $customer]),
-            'product.repository' => new ProductRepository([
-                $this->store->getId() => [
-                    $sku => $this->product
-                ]
-            ]),
-            'stock.product_availability' => $this->stock->reveal(),
-            'ereservation.repository' => $this->EReservationRepository->reveal(),
-            'mailer' => $this->mailer->reveal()
-        ];
 
     }
 
     /**
      * @test
      */
-    public function it_creates_an_ereservation()
+    public function createReservationSucess()
     {
         //Given
         $reservationId = 1;
@@ -87,21 +82,54 @@ class CreateReservationTest extends TestCase
                     'Available' => true,
                     'id' => $reservationId
                 ]);
+        $expectedUser = new Customer(1);
+        $sku = 'test';
+        $price = 200000;
+        $ExpectedProduct = new Product($sku, $price);
+        $params = [
+            'productsku' => 'test',
+            'customerid' => 1
+        ];
 
         $this->EReservationRepository->nextId()->willReturn($reservationId);
         $this->EReservationRepository->save(Argument::any())->shouldBeCalled();
+        $this->productRepository->reveal();
+        $this->customerRepository->reveal();
+        $this->productRepository->getProductFromSkuByStore($params[CreateReservation::PRODUCT_SKU_PARAM], 17)->willReturn($ExpectedProduct);
+        $this->customerRepository->getById($params[CreateReservation::CUSTOMER_ID_PARAM])->willReturn($expectedUser);
 
-        $this->stock->getStockLevelByStore($this->store->getId(), $this->product)->willReturn($expectedResponse);
+        $this->stock->getStockLevelByStore($this->store->getId(), $ExpectedProduct)->willReturn($expectedResponse);
         $this->mailer->sendNewEReservation(self::SAlES_TEAM_MAIL, $reservationId)->willReturn(true);
 
         //When
-        $response = $this->SUT->create([
-            'productsku' => 'test',
-            'customerid' => 1
-        ]);
+        $response = $this->service->create($this->logger->reveal(), $this->productRepository->reveal(),
+            $this->customerRepository->reveal(), $this->stock->reveal(), $this->EReservationRepository->reveal(),
+            $this->mailer->reveal(), $params);
 
        //Then
         $this->assertSame(201, $response->getCode());
         $this->assertSame($reservationId, $response->getData()['id']);
+    }
+
+    /**
+     * @test
+     */
+    public function CreateReservationWhenNoDataSent()
+    {
+        //Given
+        $reservationId = 1;
+        $params = [
+        ];
+
+        $this->EReservationRepository->nextId()->shouldNotBeCalled($reservationId);
+        $this->mailer->sendNewEReservation(self::SAlES_TEAM_MAIL, $reservationId)->shouldNotBeCalled();
+
+        //When
+        $response = $this->service->create($this->logger->reveal(), $this->productRepository->reveal(),
+            $this->customerRepository->reveal(), $this->stock->reveal(), $this->EReservationRepository->reveal(),
+            $this->mailer->reveal(), $params);
+
+       //Then
+        $this->assertSame(403, $response->getCode());
     }
 }
